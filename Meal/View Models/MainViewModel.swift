@@ -8,18 +8,28 @@
 import Foundation
 import Combine
 
+enum CategoryType: String, CaseIterable {
+    case starter = "Starter"
+    case pasta = "Pasta"
+    case dessert = "Dessert"
+}
+
 class MainViewModel {
     
     // MARK: - Private Properties
     private let apiService: MealAPIService
 
-    private enum CategoryType: String {
+    // MARK: - Public Properties
+    public enum CategoryType: String, CaseIterable {
         case starter = "Starter"
         case pasta = "Pasta"
         case dessert = "Dessert"
+        
+        static func allValues() -> [String] {
+            return self.allCases.map { $0.rawValue }
+        }
     }
 
-    // MARK: - Public Properties
     
     /**
      Gets meal details with ID

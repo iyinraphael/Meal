@@ -13,7 +13,7 @@ struct MealCategory: Decodable {
     let meals: [Meal]
 }
 
-struct Meal: Decodable {
+struct Meal: Decodable, Hashable {
     
     // MARK: - Properties
     let idMeal: String
