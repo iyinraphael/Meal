@@ -45,7 +45,7 @@ class MainViewModel {
      Gets meal in a category
      - Returns: A publisher that will return meal in pasta  category
      */
-    public var pasterMealCategoryPublisher: AnyPublisher<[Meal], APIServiceError> {
+    public var pastaMealCategoryPublisher: AnyPublisher<[Meal], APIServiceError> {
         return apiService
             .getMealInCategory(.filterCategory, CategoryType.pasta.rawValue)
             .map { $0.meals }.eraseToAnyPublisher()

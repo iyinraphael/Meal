@@ -119,7 +119,7 @@ class MainViewController: UIViewController {
                     self?.dataSource?.apply(snapshot)
                 }).store(in: &subscription)
         case 1:
-            mainViewModel?.pasterMealCategoryPublisher
+            mainViewModel?.pastaMealCategoryPublisher
                 .sink(receiveCompletion: { _ in
                 }, receiveValue: { [weak self] meals in
                     snapshot.appendSections([.pasta])
