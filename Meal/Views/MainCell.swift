@@ -81,29 +81,7 @@ class MainCell: UICollectionViewCell {
     }
     
     func updateView(with meal: Meal) {
-            nameLabel.text = meal.strMeal
-            downloadImageFrom(imageStr: meal.strMealThumb)
-    }
-    
-    private func downloadImageFrom(imageStr: String) {
-        if let cachedImage = imageCache.object(
-            forKey: imageStr as NSString) as?  UIImage {
-            self.mealImageView.image = cachedImage
-            
-        }else {
-            guard let imageURL = URL(string: imageStr) else { fatalError()}
-            let imageTo = UIImage(contentsOfFile: imageStr)
-            
-            URLSession.shared.dataTask(with: imageURL) { data, _, _ in
-                guard let data = data, let imageToCache = UIImage(data: data)
-                else { fatalError("could not retrieve image")}
-                
-                self.imageCache.setObject(imageToCache, forKey: imageStr as NSString)
-                
-                DispatchQueue.main.async { [weak self] in
-                    self?.mealImageView.image = imageToCache
-                }
-            }.resume()
-        }
+        nameLabel.text = meal.strMeal
+        mealImageView.loadImage(from: meal.strMealThumb)
     }
 }

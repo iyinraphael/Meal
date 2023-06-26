@@ -12,26 +12,30 @@ class MainViewController: UIViewController {
     
     // MARK: - Private Properties
     private var mainViewModel: MainViewModel?
-    private var apiEnvironment =  APIEnvironment()
+    private let apiEnvironment =  APIEnvironment()
+    private var apiService: APIService?
     private var dataSource: UICollectionViewDiffableDataSource<MainViewModel.CategoryType, Meal>?
+    private var meals = [Meal]()
     
-    private var selectedSegment = 2
+    private var selectedSegmentIndex = 2
     private let viewTitle = NSLocalizedString("Meals", comment: "View title")
+    private var subscription: Set<AnyCancellable> = []
+
     
     // MARK: - Outlets
     var segmentControl: UISegmentedControl?
     var collectionView: UICollectionView?
     
-    private var subscription: Set<AnyCancellable> = []
 
     // MARK: - View Controller Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.white
+        view.backgroundColor = .systemBackground
         title = viewTitle
         navigationController?.navigationBar.prefersLargeTitles = true
     
         let apiService = MealAPIService(environmentAPI: apiEnvironment)
+        self.apiService = apiService
         mainViewModel = MainViewModel(apiService: apiService)
         
         setUpViews()
@@ -43,17 +47,19 @@ class MainViewController: UIViewController {
     private func setUpViews() {
         let control = UISegmentedControl(items: MainViewModel.CategoryType.allValues())
         control.translatesAutoresizingMaskIntoConstraints = false
-        control.selectedSegmentIndex = selectedSegment
+        control.selectedSegmentIndex = selectedSegmentIndex
         control.addTarget(self, action: #selector(setUpBinding), for: .valueChanged)
         segmentControl = control
     
         let collectionView = UICollectionView(frame: CGRect.zero, collectionViewLayout: makeCollectionView())
         collectionView.translatesAutoresizingMaskIntoConstraints = false
         collectionView.showsVerticalScrollIndicator = false
+        collectionView.delegate = self
         self.collectionView = collectionView
         
         view.addSubview(control)
         view.addSubview(collectionView)
+        
         NSLayoutConstraint.activate([
             control.leadingAnchor.constraint(equalTo: view.layoutMarginsGuide.leadingAnchor),
             control.topAnchor.constraint(equalTo: view.layoutMarginsGuide.topAnchor),
@@ -93,18 +99,23 @@ class MainViewController: UIViewController {
         }
     }
     
+    /**
+        Set up diffable data source snapshot to update collection view
+     -   A publisher is updated whenever a segment index is selected
+     */
     @objc private func setUpBinding() {
         var snapshot = NSDiffableDataSourceSnapshot<MainViewModel.CategoryType, Meal>()
         
-        selectedSegment = segmentControl?.selectedSegmentIndex ?? 2
+        selectedSegmentIndex = segmentControl?.selectedSegmentIndex ?? 2
         
-        switch selectedSegment {
+        switch selectedSegmentIndex {
         case 0:
             mainViewModel?.starterMealCategoryPublisher
                 .sink(receiveCompletion: { _ in
                 }, receiveValue: { [weak self] meals in
                     snapshot.appendSections([.starter])
                     snapshot.appendItems(meals)
+                    self?.meals = meals
                     self?.dataSource?.apply(snapshot)
                 }).store(in: &subscription)
         case 1:
@@ -113,6 +124,7 @@ class MainViewController: UIViewController {
                 }, receiveValue: { [weak self] meals in
                     snapshot.appendSections([.pasta])
                     snapshot.appendItems(meals)
+                    self?.meals = meals
                     self?.dataSource?.apply(snapshot)
                 }).store(in: &subscription)
         case 2:
@@ -121,10 +133,27 @@ class MainViewController: UIViewController {
                 }, receiveValue: { [weak self] meals in
                     snapshot.appendSections([.dessert])
                     snapshot.appendItems(meals)
+                    self?.meals = meals
                     self?.dataSource?.apply(snapshot)
                 }).store(in: &subscription)
         default:
             print("default")
         }
+    }
+}
+
+// MARK: - Collection Delegate
+extension MainViewController: UICollectionViewDelegate {
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let meal = meals[indexPath.row]
+        
+        let detailVC = DetailViewController()
+        
+        let viewModel = DetailViewModel(apiService: apiService!, mealID: meal.idMeal)
+        detailVC.detailViewModel = viewModel
+        detailVC.modalPresentationStyle = .fullScreen
+        
+        navigationController?.pushViewController(detailVC, animated: false)
     }
 }
